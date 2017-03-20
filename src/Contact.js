@@ -28,7 +28,8 @@ export default class Contact extends React.Component {
           name: "Dyhore",
           phone: "010-0000-00004"
         }
-      ]
+      ],
+      isEdit: false
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -38,6 +39,31 @@ export default class Contact extends React.Component {
     this.handleRemove = this.handleRemove.bind(this);
     this.handleEdit = this.handleEdit.bind(this);
 
+    this.handleEditing = this.handleEditing.bind(this);
+
+  }
+
+  componentWillMount(){
+    const contactData = localStorage.contactData;
+
+    if(contactData){
+      this.setState({
+        contactData : JSON.parse(contactData)
+      });
+    }
+
+  }
+  componentDidUpdate(prevProps, prevState){
+    if(JSON.stringify(prevState.contactData) != JSON.stringify(this.state.contactData)){
+      localStorage.contactData = JSON.stringify(this.state.contactData);
+    }
+  }
+
+  handleEditing(b){
+    this.setState({
+      isEdit: b
+    });
+
   }
 
   handleChange(e){
@@ -46,10 +72,12 @@ export default class Contact extends React.Component {
     });
   }
   handleClick(key){
+    if(this.state.isEdit) return;
     this.setState({
       selectKey : key
     });
-    console.log(key, 'is selected');
+    console.log(key, 'is selected' + this.state.isEdit);
+
   }
 
   handleCreate(contact){
@@ -58,21 +86,24 @@ export default class Contact extends React.Component {
     });
   }
   handleRemove(){
+    if(this.state.selectKey < 0) return;
     this.setState({
       contactData : Update(this.state.contactData, {$splice:[[this.state.selectKey,1]]}),
       selectKey : -1
     });
+
   }
 
   handleEdit(newName, newPhone){
     this.setState({
-      contactDate : Update(this.state.contactDate, {
-        [this.state.selectkey] : {
-          name: {$set : newName},
-          phone: {$set : newPhone}
+      contactData: Update(this.state.contactData,{
+        [this.state.selectKey]:{
+          name:{$set:newName},
+          phone:{$set:newPhone}
         }
       })
     });
+
   }
 
 
@@ -111,6 +142,9 @@ export default class Contact extends React.Component {
         <ContactDetail
           isSelected={this.state.selectKey !== -1}
           contact={this.state.contactData[this.state.selectKey]}
+          onRemove={this.handleRemove}
+          onEdit={this.handleEdit}
+          onEditing={this.handleEditing}
         />
       <ContactCreate onCreate={this.handleCreate}/>
       </div>
